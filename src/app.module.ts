@@ -3,27 +3,26 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
-import { join } from 'path';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
-import { GraphQlResolver } from './graphql.resolver';
+import { FileContractModule } from './file-contract/file-contract.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    MongooseModule.forRoot('mongodb://localhost/nestjs-graphql'), // Update with your MongoDB URI
+    MongooseModule.forRoot('mongodb://localhost/nestjs-graphql'),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'), // Generates schema.gql file
+      typePaths: ['./**/*.graphql'],
+      autoSchemaFile: true, // Generate schema in-memory
       sortSchema: true,
-      playground: false, // Disable the default GraphQL Playground
-      plugins: [
-        ApolloServerPluginLandingPageLocalDefault(), // Use Apollo Sandbox as the default playground
-      ],
+      playground: false,
+      plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
+    FileContractModule,
   ],
   controllers: [AppController],
-  providers: [GraphQlResolver, AppService],
+  providers: [AppService],
 })
 export class AppModule {}

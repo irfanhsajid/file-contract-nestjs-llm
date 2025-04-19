@@ -1,0 +1,18 @@
+schema: ./src/**/*.graphql
+generates:
+  src/graphql.schema.ts:
+    plugins:
+      - typescript
+    config:
+      skipTypename: true
+      namingConvention: keep
+      declarationKind: interface
+      scalars:
+        ID: string
+        String: string
+        Boolean: boolean
+        Int: number
+        Float: number
+      avoidOptionals: true
+      nonOptionalTypename: false
+      useTypeImports: true
