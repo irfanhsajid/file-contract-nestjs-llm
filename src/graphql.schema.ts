@@ -1,47 +1,27 @@
-export type Maybe<T> = T | null;
-export type InputMaybe<T> = Maybe<T>;
-export type Exact<T extends { [key: string]: unknown }> = {
-  [K in keyof T]: T[K];
-};
-export type MakeOptional<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]?: Maybe<T[SubKey]>;
-};
-export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & {
-  [SubKey in K]: Maybe<T[SubKey]>;
-};
-export type MakeEmpty<
-  T extends { [key: string]: unknown },
-  K extends keyof T,
-> = { [_ in K]?: never };
-export type Incremental<T> =
-  | T
-  | {
-      [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never;
-    };
-/** All built-in and custom scalars, mapped to their actual values */
-export interface Scalars {
-  ID: { input: string; output: string };
-  String: { input: string; output: string };
-  Boolean: { input: boolean; output: boolean };
-  Int: { input: number; output: number };
-  Float: { input: number; output: number };
+
+/*
+ * -------------------------------------------------------
+ * THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+ * -------------------------------------------------------
+ */
+
+/* tslint:disable */
+/* eslint-disable */
+
+export class TQuery {
+    sayHello: string;
 }
 
-export interface Query {
-  getUser: User;
-  hello: Scalars['String']['output'];
+export class User {
+    id: string;
+    name: string;
+    email: string;
 }
 
-export interface QuerygetUserArgs {
-  id: Scalars['ID']['input'];
+export abstract class IQuery {
+    abstract getUser(id: string): User | Promise<User>;
+
+    abstract hello(): string | Promise<string>;
 }
 
-export interface TQuery {
-  sayHello: Scalars['String']['output'];
-}
-
-export interface User {
-  email: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-}
+type Nullable<T> = T | null;
