@@ -1,0 +1,125 @@
+type BoundingBox {
+  top: Float
+  left: Float
+  width: Float
+  height: Float
+}
+
+type Coordinates {
+  page: Int
+  boundingBox: BoundingBox
+}
+
+type Source {
+  similarityScore: Float
+  chunkId: String
+  chunkNumber: Int
+  text: String
+  textS3Link: String
+  pageNumber: Int
+  documentId: Int
+  documentCategory: String
+  totalPage: Int
+  filename: String
+  testType: String
+  productType: String
+  coordinates: Coordinates
+}
+
+type ExtractionResult {
+  category: String
+  eventType: String
+  eventDetail: String
+  llmExtraction: String
+  reasoning: String
+  patientId: Int
+  eventId: String
+  model: String
+  parserName: String
+  codeLabel: String
+  codeValue: String
+  source: Source
+}
+
+type MetaData {
+  patientId: Int
+  caseId: Int
+  casebundlingId: Int
+  casebundlingType: String
+  extractionId: String
+  genaiPipelineVersion: String
+  totalExtractions: Int
+  extractionStatus: String
+  validationStatus: String
+}
+
+type FileContract {
+  _id: String
+  schemaVersion: String
+  metadata: MetaData
+  extractionResults: [ExtractionResult]
+  createdAt: String
+  updatedAt: String
+}
+type DeleteEventResponse {
+  message: String
+  status: Boolean
+}
+type CreateEventResponse {
+  message: String
+  status: Boolean
+}
+
+# Input Types
+input SourceInput {
+  similarityScore: Float
+  chunkId: String
+  chunkNumber: Int
+  text: String
+  textS3Link: String
+  pageNumber: Int
+  documentId: Int
+  documentCategory: String
+  totalPage: Int
+  filename: String
+  testType: String
+  productType: String
+  coordinates: CoordinatesInput
+}
+
+input CoordinatesInput {
+  page: Int
+  boundingBox: BoundingBoxInput
+}
+
+input BoundingBoxInput {
+  top: Float
+  left: Float
+  width: Float
+  height: Float
+}
+
+input ExtractionResultInput {
+  patientId: Int!
+  eventId: String!
+  category: String!
+  eventType: String!
+  eventDetail: String!
+  llmExtraction: String!
+  reasoning: String!
+  parserName: String
+  codeLabel: String
+  codeValue: String
+  source: SourceInput
+}
+
+type Query {
+  getFileContract(id: String!): FileContract
+  getExtraction(extractionId: String!): FileContract
+  getSingleEvent(eventId: String, filename: String): ExtractionResult
+}
+
+type Mutation {
+  deleteEventByEventId(eventId: String!): DeleteEventResponse
+  createEvent(event: ExtractionResultInput!): CreateEventResponse
+}

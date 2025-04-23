@@ -1,8 +1,32 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
+import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.mjs';
+import { Logger } from '@nestjs/common';
+
+import { AppModule } from './modules/app/app.module';
+import config from './config';
+import { GraphQLLoggingInterceptor } from './interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 5000);
+  const logger = new Logger('Main');
+
+  app.useGlobalInterceptors(new GraphQLLoggingInterceptor());
+
+  app.use(
+    graphqlUploadExpress({
+      maxFileSize: config.graphqlUploadExpress.maxFileSize,
+      maxFiles: config.graphqlUploadExpress.maxFiles,
+    }),
+  );
+
+  const PORT: number = config.port;
+  await app.listen(PORT, () => {
+    logger.log(`Server is running on http://localhost:${PORT}`);
+    logger.log(`GraphQL Playground is available at http://localhost:${PORT}/graphql`);
+  });
 }
+
 bootstrap();

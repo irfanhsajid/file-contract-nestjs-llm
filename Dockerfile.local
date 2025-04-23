@@ -1,0 +1,11 @@
+# Use an official MongoDB image as the base image
+FROM mongo:latest
+
+# Set environment variables for MongoDB
+ENV MONGO_INITDB_DATABASE=natera-clinverify
+
+# Expose the default MongoDB port
+EXPOSE 27017
+
+# Command to start MongoDB
+CMD ["mongod", "--bind_ip", "0.0.0.0"]
