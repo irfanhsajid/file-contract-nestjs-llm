@@ -13,7 +13,6 @@ const common_1 = require("@nestjs/common");
 const graphql_1 = require("@nestjs/graphql");
 const mongoose_1 = require("@nestjs/mongoose");
 const path_1 = require("path");
-const mongooseFactory_1 = require("../../utils/mongooseFactory");
 const patients_resolver_1 = require("../../patients/patients.resolver");
 const patients_service_1 = require("../../patients/patients.service");
 const file_contract_module_1 = require("../file-contracts/file-contract.module");
@@ -35,9 +34,7 @@ exports.AppModule = AppModule = __decorate([
                 introspection: true,
                 plugins: [(0, default_1.ApolloServerPluginLandingPageLocalDefault)()],
             }),
-            mongoose_1.MongooseModule.forRootAsync({
-                useFactory: mongooseFactory_1.mongooseFactory,
-            }),
+            mongoose_1.MongooseModule.forRoot('mongodb://localhost:27017/natera-clinverify'),
             file_contract_module_1.FileContractModule,
         ],
         controllers: [health_controller_1.HealthController],

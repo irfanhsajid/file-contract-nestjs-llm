@@ -89,7 +89,9 @@ let FileContractService = FileContractService_1 = class FileContractService {
         }
         const updatedDoc = await this.fileContractModel.findOneAndUpdate({ 'extraction_results.event_id': eventId }, { $pull: { extraction_results: { event_id: eventId } } }, { new: true });
         console.log('updated doc', updatedDoc);
-        await updatedDoc?.save();
+        const camelCasedData = (0, snakeToCamelCaseKeys_1.snakeToCamelCaseKeys)(updatedDoc);
+        console.log('camelcasedata', camelCasedData);
+        await camelCasedData.save();
         this.logger.log(`Successfully deleted eventId ${eventId} from extraction_results`);
         return {
             message: `Event with eventId ${eventId} deleted successfully`,

@@ -24,9 +24,10 @@ import { HealthController } from './health.controller';
       introspection: true,
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
-    MongooseModule.forRootAsync({
-      useFactory: mongooseFactory,
-    }),
+    // MongooseModule.forRootAsync({
+    //   useFactory: mongooseFactory,
+    // }),
+    MongooseModule.forRoot('mongodb://localhost:27017/natera-clinverify'),
     FileContractModule,
   ],
   controllers: [HealthController],

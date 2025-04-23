@@ -109,8 +109,10 @@ export class FileContractService {
     );
     console.log('updated doc', updatedDoc);
 
-    //call a save method
-    await updatedDoc?.save();
+    const camelCasedData = snakeToCamelCaseKeys(updatedDoc);
+    console.log('camelcasedata', camelCasedData);
+
+    await camelCasedData.save();
 
     this.logger.log(`Successfully deleted eventId ${eventId} from extraction_results`);
 
