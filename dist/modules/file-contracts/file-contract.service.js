@@ -87,14 +87,14 @@ let FileContractService = FileContractService_1 = class FileContractService {
             this.logger.error('eventId must be provided');
             throw new common_1.NotFoundException('eventId must be provided');
         }
-        const updatedDoc = await this.fileContractModel.findOneAndUpdate({ 'extraction_results.event_id': eventId }, { $pull: { extraction_results: { event_id: eventId } } }, { new: true });
-        console.log('updated doc', updatedDoc);
-        const camelCasedData = (0, snakeToCamelCaseKeys_1.snakeToCamelCaseKeys)(updatedDoc);
-        console.log('camelcasedata', camelCasedData);
-        await camelCasedData.save();
-        this.logger.log(`Successfully deleted eventId ${eventId} from extraction_results`);
+        eventId = eventId.trim();
+        this.logger.log(`Attempting to delete event with event_id: ${eventId}`);
+        await this.fileContractModel
+            .findOne({ 'extraction_results.event_id': eventId }, { extraction_results: 1 })
+            .lean();
+        this.logger.log(`Successfully deleted event with event_id: ${eventId} from extraction_results`);
         return {
-            message: `Event with eventId ${eventId} deleted successfully`,
+            message: `Event with event_id: ${eventId} deleted successfully`,
             status: true,
         };
     }

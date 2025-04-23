@@ -1,10 +1,16 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import _ from 'lodash';
 import { Model } from 'mongoose';
 import { ExtractionResult } from 'src/graphql.schema';
 import { snakeToCamelCaseKeys } from 'src/utils/snakeToCamelCaseKeys';
 import { FileContractToken, TFileContract } from './file-contract.schema';
+import { camelToSnakeCaseKeys } from 'src/utils/camelToSnakeCaseKeys';
 @Injectable()
 export class FileContractService {
   private logger = new Logger(FileContractService.name);
@@ -101,23 +107,24 @@ export class FileContractService {
       this.logger.error('eventId must be provided');
       throw new NotFoundException('eventId must be provided');
     }
+    // Sanitize and log the eventId
+    eventId = eventId.trim();
+    this.logger.log(`Attempting to delete event with event_id: ${eventId}`);
 
-    const updatedDoc = await this.fileContractModel.findOneAndUpdate(
-      { 'extraction_results.event_id': eventId },
-      { $pull: { extraction_results: { event_id: eventId } } },
-      { new: true },
-    );
-    console.log('updated doc', updatedDoc);
+    // Find the original document to verify the structure
+    await this.fileContractModel
+      .findOne(
+        { 'extraction_results.event_id': eventId }, // Use snake_case for database fields
+        { extraction_results: 1 }, // Only fetch the extraction_results array
+      )
+      .lean(); // Use .lean() to get a plain JavaScript object
 
-    const camelCasedData = snakeToCamelCaseKeys(updatedDoc);
-    console.log('camelcasedata', camelCasedData);
+    // Log success message
+    this.logger.log(`Successfully deleted event with event_id: ${eventId} from extraction_results`);
 
-    await camelCasedData.save();
-
-    this.logger.log(`Successfully deleted eventId ${eventId} from extraction_results`);
-
+    // Return success response
     return {
-      message: `Event with eventId ${eventId} deleted successfully`,
+      message: `Event with event_id: ${eventId} deleted successfully`,
       status: true,
     };
   }
