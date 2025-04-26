@@ -1,13 +1,11 @@
-type BoundingBox {
-  top: Float
-  left: Float
-  width: Float
-  height: Float
+enum ProductType {
+  EPIC
+  SIGNATERA
 }
 
-type Coordinates {
-  page: Int
-  boundingBox: BoundingBox
+enum Status {
+  COMPLETED
+  PENDING
 }
 
 type Source {
@@ -22,11 +20,17 @@ type Source {
   totalPage: Int
   filename: String
   testType: String
-  productType: String
-  coordinates: Coordinates
+  productType: ProductType
+  coordinates: [String]
 }
 
-type ExtractionResult {
+type SourceString {
+  value: String
+}
+
+union SourceUnion = Source | SourceString
+
+type ExtractionEvent {
   category: String
   eventType: String
   eventDetail: String
@@ -38,7 +42,7 @@ type ExtractionResult {
   parserName: String
   codeLabel: String
   codeValue: String
-  source: Source
+  source: SourceUnion
 }
 
 type MetaData {
@@ -49,23 +53,31 @@ type MetaData {
   extractionId: String
   genaiPipelineVersion: String
   totalExtractions: Int
-  extractionStatus: String
-  validationStatus: String
+  extractionStatus: Status
+  validationStatus: Status
 }
 
 type FileContract {
   _id: String
   schemaVersion: String
   metadata: MetaData
-  extractionResults: [ExtractionResult]
+  ExtractionEvents: [ExtractionEvent]
   createdAt: String
   updatedAt: String
 }
+
 type DeleteEventResponse {
   message: String
   status: Boolean
 }
+
 type CreateEventResponse {
+  message: String
+  status: Boolean
+}
+
+type UpdateEventResponse {
+  data: ExtractionEvent
   message: String
   status: Boolean
 }
@@ -83,23 +95,12 @@ input SourceInput {
   totalPage: Int
   filename: String
   testType: String
-  productType: String
-  coordinates: CoordinatesInput
+  productType: ProductType
+  coordinates: [String]
+  value: String # Added to handle string case (e.g., comma-separated UUIDs)
 }
 
-input CoordinatesInput {
-  page: Int
-  boundingBox: BoundingBoxInput
-}
-
-input BoundingBoxInput {
-  top: Float
-  left: Float
-  width: Float
-  height: Float
-}
-
-input ExtractionResultInput {
+input EventInput {
   patientId: Int!
   eventId: String!
   category: String!
@@ -116,10 +117,11 @@ input ExtractionResultInput {
 type Query {
   getFileContract(id: String!): FileContract
   getExtraction(extractionId: String!): FileContract
-  getSingleEvent(eventId: String, filename: String): ExtractionResult
+  getSingleEvent(eventId: String, filename: String): ExtractionEvent
 }
 
 type Mutation {
   deleteEventByEventId(eventId: String!): DeleteEventResponse
-  createEvent(event: ExtractionResultInput!): CreateEventResponse
+  createEvent(input: EventInput!): CreateEventResponse
+  updateEvent(eventId: String!, input: EventInput!): UpdateEventResponse
 }

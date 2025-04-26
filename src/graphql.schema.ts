@@ -8,6 +8,16 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export enum ProductType {
+    EPIC = "EPIC",
+    SIGNATERA = "SIGNATERA"
+}
+
+export enum Status {
+    COMPLETED = "COMPLETED",
+    PENDING = "PENDING"
+}
+
 export class SourceInput {
     similarityScore?: Nullable<number>;
     chunkId?: Nullable<string>;
@@ -20,23 +30,12 @@ export class SourceInput {
     totalPage?: Nullable<number>;
     filename?: Nullable<string>;
     testType?: Nullable<string>;
-    productType?: Nullable<string>;
-    coordinates?: Nullable<CoordinatesInput>;
+    productType?: Nullable<ProductType>;
+    coordinates?: Nullable<Nullable<string>[]>;
+    value?: Nullable<string>;
 }
 
-export class CoordinatesInput {
-    page?: Nullable<number>;
-    boundingBox?: Nullable<BoundingBoxInput>;
-}
-
-export class BoundingBoxInput {
-    top?: Nullable<number>;
-    left?: Nullable<number>;
-    width?: Nullable<number>;
-    height?: Nullable<number>;
-}
-
-export class ExtractionResultInput {
+export class EventInput {
     patientId: number;
     eventId: string;
     category: string;
@@ -48,18 +47,6 @@ export class ExtractionResultInput {
     codeLabel?: Nullable<string>;
     codeValue?: Nullable<string>;
     source?: Nullable<SourceInput>;
-}
-
-export class BoundingBox {
-    top?: Nullable<number>;
-    left?: Nullable<number>;
-    width?: Nullable<number>;
-    height?: Nullable<number>;
-}
-
-export class Coordinates {
-    page?: Nullable<number>;
-    boundingBox?: Nullable<BoundingBox>;
 }
 
 export class Source {
@@ -74,11 +61,15 @@ export class Source {
     totalPage?: Nullable<number>;
     filename?: Nullable<string>;
     testType?: Nullable<string>;
-    productType?: Nullable<string>;
-    coordinates?: Nullable<Coordinates>;
+    productType?: Nullable<ProductType>;
+    coordinates?: Nullable<Nullable<string>[]>;
 }
 
-export class ExtractionResult {
+export class SourceString {
+    value?: Nullable<string>;
+}
+
+export class ExtractionEvent {
     category?: Nullable<string>;
     eventType?: Nullable<string>;
     eventDetail?: Nullable<string>;
@@ -90,7 +81,7 @@ export class ExtractionResult {
     parserName?: Nullable<string>;
     codeLabel?: Nullable<string>;
     codeValue?: Nullable<string>;
-    source?: Nullable<Source>;
+    source?: Nullable<SourceUnion>;
 }
 
 export class MetaData {
@@ -101,15 +92,15 @@ export class MetaData {
     extractionId?: Nullable<string>;
     genaiPipelineVersion?: Nullable<string>;
     totalExtractions?: Nullable<number>;
-    extractionStatus?: Nullable<string>;
-    validationStatus?: Nullable<string>;
+    extractionStatus?: Nullable<Status>;
+    validationStatus?: Nullable<Status>;
 }
 
 export class FileContract {
     _id?: Nullable<string>;
     schemaVersion?: Nullable<string>;
     metadata?: Nullable<MetaData>;
-    extractionResults?: Nullable<Nullable<ExtractionResult>[]>;
+    ExtractionEvents?: Nullable<Nullable<ExtractionEvent>[]>;
     createdAt?: Nullable<string>;
     updatedAt?: Nullable<string>;
 }
@@ -124,12 +115,18 @@ export class CreateEventResponse {
     status?: Nullable<boolean>;
 }
 
+export class UpdateEventResponse {
+    data?: Nullable<ExtractionEvent>;
+    message?: Nullable<string>;
+    status?: Nullable<boolean>;
+}
+
 export abstract class IQuery {
     abstract getFileContract(id: string): Nullable<FileContract> | Promise<Nullable<FileContract>>;
 
     abstract getExtraction(extractionId: string): Nullable<FileContract> | Promise<Nullable<FileContract>>;
 
-    abstract getSingleEvent(eventId?: Nullable<string>, filename?: Nullable<string>): Nullable<ExtractionResult> | Promise<Nullable<ExtractionResult>>;
+    abstract getSingleEvent(eventId?: Nullable<string>, filename?: Nullable<string>): Nullable<ExtractionEvent> | Promise<Nullable<ExtractionEvent>>;
 
     abstract patients(): Nullable<Nullable<Patient>[]> | Promise<Nullable<Nullable<Patient>[]>>;
 
@@ -139,7 +136,9 @@ export abstract class IQuery {
 export abstract class IMutation {
     abstract deleteEventByEventId(eventId: string): Nullable<DeleteEventResponse> | Promise<Nullable<DeleteEventResponse>>;
 
-    abstract createEvent(event: ExtractionResultInput): Nullable<CreateEventResponse> | Promise<Nullable<CreateEventResponse>>;
+    abstract createEvent(input: EventInput): Nullable<CreateEventResponse> | Promise<Nullable<CreateEventResponse>>;
+
+    abstract updateEvent(eventId: string, input: EventInput): Nullable<UpdateEventResponse> | Promise<Nullable<UpdateEventResponse>>;
 }
 
 export class Patient {
@@ -148,4 +147,5 @@ export class Patient {
     age?: Nullable<number>;
 }
 
+export type SourceUnion = Source | SourceString;
 type Nullable<T> = T | null;

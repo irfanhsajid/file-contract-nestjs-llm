@@ -2,8 +2,9 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import {
   CreateEventResponse,
   DeleteEventResponse,
-  ExtractionResult,
+  ExtractionEvent,
   FileContract,
+  UpdateEventResponse,
 } from 'src/graphql.schema';
 import { FileContractService } from './file-contract.service';
 
@@ -26,18 +27,18 @@ export class FileContractResolver {
     const fileContract = await this.fileContractService.getExtraction(extractionId);
     return fileContract as FileContract;
   }
-  @Query(() => ExtractionResult)
+  @Query(() => ExtractionEvent)
   async getSingleEvent(
     @Args({ name: 'eventId', type: () => String })
     eventId: string,
     @Args({ name: 'filename', type: () => String })
     filename: string,
-  ): Promise<ExtractionResult> {
-    const extractionResult = await this.fileContractService.getSingleEvent({
+  ): Promise<ExtractionEvent> {
+    const ExtractionEvent = await this.fileContractService.getSingleEvent({
       eventId,
       filename,
     });
-    return extractionResult;
+    return ExtractionEvent;
   }
   @Mutation(() => DeleteEventResponse)
   async deleteEventByEventId(
@@ -47,12 +48,23 @@ export class FileContractResolver {
     console.log('Delete response in resolver:', JSON.stringify(response, null, 2));
     return response;
   }
+
   @Mutation(() => CreateEventResponse)
   async createEvent(
-    @Args({ name: 'event', type: () => ExtractionResult }) event: ExtractionResult,
+    @Args({ name: 'input', type: () => ExtractionEvent }) input: ExtractionEvent,
   ): Promise<CreateEventResponse> {
-    const response = await this.fileContractService.createEvent(event);
+    const response = await this.fileContractService.createEvent(input);
     console.log('Create response in resolver:', JSON.stringify(response, null, 2));
+    return response;
+  }
+
+  @Mutation(() => UpdateEventResponse)
+  async updateEvent(
+    @Args({ name: 'eventId', type: () => String }) eventId: string,
+    @Args({ name: 'input', type: () => ExtractionEvent }) input: ExtractionEvent,
+  ): Promise<UpdateEventResponse> {
+    const response = await this.fileContractService.updateEvent(eventId, input);
+    console.log('Edit response in resolver:', JSON.stringify(response, null, 2));
     return response;
   }
 }

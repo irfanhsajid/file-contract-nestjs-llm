@@ -4,18 +4,11 @@ import { z } from 'zod';
 
 extendZod(z);
 
-export const BoundingBoxInputSchema = z.object({
-  top: z.number(),
-  left: z.number(),
-  width: z.number(),
-  height: z.number(),
-});
+// Enum Schemas
+export const ProductTypeSchema = z.enum(['EPIC', 'SIGNATERA']);
+export const StatusSchema = z.enum(['COMPLETED', 'PENDING']);
 
-export const CoordinatesSchema = z.object({
-  page: z.number(),
-  boundingBox: BoundingBoxInputSchema,
-});
-
+// Source Schema
 export const SourceSchema = z.object({
   similarityScore: z.number(),
   chunkId: z.string(),
@@ -28,10 +21,19 @@ export const SourceSchema = z.object({
   totalPage: z.number(),
   filename: z.string(),
   testType: z.string(),
-  productType: z.string(),
-  coordinates: CoordinatesSchema,
+  productType: ProductTypeSchema, // Updated to use ProductType enum
+  coordinates: z.array(z.string()),
 });
 
+// SourceString Schema (for string case)
+export const SourceStringSchema = z.object({
+  value: z.string(),
+});
+
+// SourceUnion Schema (supports Source or SourceString)
+export const SourceUnionSchema = z.union([SourceSchema, SourceStringSchema]);
+
+// ExtractionResult Schema
 export const ExtractionResultSchema = z.object({
   _id: z.string().optional(),
   category: z.string(),
@@ -44,9 +46,10 @@ export const ExtractionResultSchema = z.object({
   parserName: z.string().optional(),
   codeLabel: z.string().optional(),
   codeValue: z.string().optional(),
-  source: SourceSchema,
+  source: SourceUnionSchema, // Updated to use SourceUnion
 });
 
+// MetaData Schema
 export const MetaDataSchema = z
   .object({
     patientId: z.number(),
@@ -56,8 +59,8 @@ export const MetaDataSchema = z
     extractionId: z.string(),
     genaiPipelineVersion: z.string(),
     totalExtractions: z.number(),
-    extractionStatus: z.enum(['pending', 'completed']),
-    validationStatus: z.enum(['pending', 'completed']),
+    extractionStatus: StatusSchema, // Updated to use Status enum
+    validationStatus: StatusSchema, // Updated to use Status enum
   })
   .optional();
 

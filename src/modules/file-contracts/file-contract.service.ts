@@ -1,19 +1,15 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import _ from 'lodash';
 import { Model } from 'mongoose';
-import { ExtractionResult } from 'src/graphql.schema';
+import { ExtractionEvent, ProductType, Source, UpdateEventResponse } from 'src/graphql.schema';
 import { snakeToCamelCaseKeys } from 'src/utils/snakeToCamelCaseKeys';
 import { FileContractToken, TFileContract } from './file-contract.schema';
-import { camelToSnakeCaseKeys } from 'src/utils/camelToSnakeCaseKeys';
+
 @Injectable()
 export class FileContractService {
   private logger = new Logger(FileContractService.name);
+
   constructor(
     @InjectModel(FileContractToken) private readonly fileContractModel: Model<TFileContract>,
   ) {}
@@ -33,7 +29,7 @@ export class FileContractService {
 
   // get extraction by extraction_id
   async getExtraction(extractionId: string): Promise<TFileContract> {
-    const query = { 'metadata.extraction_id': extractionId };
+    const query = { 'metadata.extractionId': extractionId };
     const fileContract = await this.fileContractModel.findOne(query).lean();
     if (!fileContract) {
       this.logger.error(`No file contract found for ID: ${extractionId}`);
@@ -51,7 +47,7 @@ export class FileContractService {
   }: {
     filename?: string;
     eventId?: string;
-  }): Promise<ExtractionResult> {
+  }): Promise<ExtractionEvent> {
     // Validate input: At least one parameter must be provided
     if (!filename && !eventId) {
       this.logger.error('At least one of filename, or eventId must be provided');
@@ -59,20 +55,15 @@ export class FileContractService {
         'At least one of extractionId, filename, or eventId must be provided',
       );
     }
-
-    // Build the query
     const query: any = {};
-
     if (filename) {
       this.logger.log(`Fetching extraction with filename: ${filename}`);
-      query['extraction_results.Source.filename'] = filename;
+      query['extractionResults.source.filename'] = filename;
     }
-
     if (eventId) {
       this.logger.log(`Fetching extraction with eventId: ${eventId}`);
-      query['extraction_results.event_id'] = eventId;
+      query['extractionResults.eventId'] = eventId;
     }
-    // Execute the query
     const fileContract = await this.fileContractModel.findOne(query).lean();
 
     if (!fileContract) {
@@ -81,11 +72,10 @@ export class FileContractService {
     }
     // Use Lodash chain to filter and extract the matching extraction result
     const matchingExtraction = _.chain([fileContract])
-      // @ts-ignore
-      .flatMap((fc) => fc.extraction_results || []) // Flatten extraction_results
+      .flatMap((fc) => fc.extractionResults || [])
       .filter({
-        ...(eventId && { event_id: eventId }), // Match event_id
-        ...(filename && { Source: { filename } }), // Match Source.filename
+        ...(eventId && { eventId: eventId }),
+        ...(filename && { source: { filename } }),
       })
       .first()
       .value();
@@ -94,10 +84,8 @@ export class FileContractService {
       this.logger.error(`No extraction result found for query: ${JSON.stringify(query)}`);
       throw new NotFoundException('Extraction result not found');
     }
-
     // Convert snake_case to camelCase
-    const camelCasedExtraction = snakeToCamelCaseKeys(matchingExtraction) as ExtractionResult;
-    // this.logger.log(`Camel cased extraction: ${JSON.stringify(camelCasedExtraction)}`);
+    const camelCasedExtraction = snakeToCamelCaseKeys(matchingExtraction) as ExtractionEvent;
     return camelCasedExtraction;
   }
 
@@ -107,30 +95,21 @@ export class FileContractService {
       this.logger.error('eventId must be provided');
       throw new NotFoundException('eventId must be provided');
     }
-    // Sanitize and log the eventId
-    eventId = eventId.trim();
-    this.logger.log(`Attempting to delete event with event_id: ${eventId}`);
+    const res = await this.fileContractModel.updateOne(
+      { 'extractionResults.eventId': eventId },
+      { $pull: { extractionResults: { eventId: eventId } } },
+    );
+    console.log('response >', res);
+    this.logger.log(`Successfully deleted eventId ${eventId} from extractionResults`);
 
-    // Find the original document to verify the structure
-    await this.fileContractModel
-      .findOne(
-        { 'extraction_results.event_id': eventId }, // Use snake_case for database fields
-        { extraction_results: 1 }, // Only fetch the extraction_results array
-      )
-      .lean(); // Use .lean() to get a plain JavaScript object
-
-    // Log success message
-    this.logger.log(`Successfully deleted event with event_id: ${eventId} from extraction_results`);
-
-    // Return success response
     return {
-      message: `Event with event_id: ${eventId} deleted successfully`,
+      message: `Event with eventId ${eventId} deleted successfully`,
       status: true,
     };
   }
 
-  // create event
-  async createEvent(event: ExtractionResult): Promise<{ message: string; status: boolean }> {
+  // create a event inside extraction_results
+  async createEvent(input: ExtractionEvent): Promise<{ message: string; status: boolean }> {
     const {
       patientId,
       eventId,
@@ -144,10 +123,9 @@ export class FileContractService {
       codeLabel,
       codeValue,
       source,
-    } = event;
-
-    // Query the FileContract by patient_id in metadata
-    const query = { 'metadata.patient_id': patientId };
+    } = input;
+    // Query the FileContract by patientId in metadata
+    const query = { 'metadata.patientId': patientId };
 
     // Check if the document exists
     const originalDocument = await this.fileContractModel.findOne(query).lean();
@@ -158,31 +136,60 @@ export class FileContractService {
     this.logger.log(`Original document: ${JSON.stringify(originalDocument, null, 2)}`);
 
     // Check if eventId already exists
-    // @ts-ignore
-    const existingEvent = originalDocument.extraction_results.find(
-      (result: any) => result.event_id === eventId,
+    const existingEvent = originalDocument.extractionResults.find(
+      (result: any) => result.eventId === eventId,
     );
+    if (existingEvent) {
+      this.logger.error(`Event with eventId: ${eventId} already exists`);
+      throw new NotFoundException(`Event with eventId: ${eventId} already exists`);
+    }
 
-    // Prepare the new ExtractionResult object (snake_case for database)
+    // Handle SourceUnion for the source field
+    let sourceData: { value: string } | Source;
+    if (source && 'value' in source && source.value) {
+      // SourceString case (ensure value is a string)
+      sourceData = { value: source.value };
+    } else if (source) {
+      // Source case
+      sourceData = {
+        similarityScore: (source as Source).similarityScore ?? null,
+        chunkId: (source as Source).chunkId ?? null,
+        chunkNumber: (source as Source).chunkNumber ?? null,
+        text: (source as Source).text ?? null,
+        textS3Link: (source as Source).textS3Link ?? null,
+        pageNumber: (source as Source).pageNumber ?? null,
+        documentId: (source as Source).documentId ?? null,
+        documentCategory: (source as Source).documentCategory ?? null,
+        totalPage: (source as Source).totalPage ?? null,
+        filename: (source as Source).filename ?? null,
+        testType: (source as Source).testType ?? null,
+        productType: (source as Source).productType ?? null,
+        coordinates: (source as Source).coordinates ?? null,
+      };
+    } else {
+      // Handle null or invalid source
+      sourceData = { value: '' }; // Default to empty SourceString per database schema
+    }
+
     const newEvent = {
+      eventId,
+      eventType,
       category,
-      event_type: eventType,
-      event_detail: eventDetail,
-      llm_extraction: llmExtraction,
+      patientId,
+      eventDetail,
+      llmExtraction,
       reasoning,
-      patient_id: patientId,
-      event_id: eventId,
-      model: model || null,
-      parser_name: parserName || null,
-      code_label: codeLabel || null,
-      code_value: codeValue || null,
-      Source: source || null,
+      model,
+      parserName,
+      codeLabel,
+      codeValue,
+      source: sourceData,
     };
 
-    // Update: Push the new event and increment total_extractions
+    // Update: Push the new event and increment totalExtractions
     const update = {
-      $push: { extraction_results: newEvent },
-      $inc: { 'metadata.total_extractions': 1 },
+      $push: { extractionResults: newEvent },
+      $inc: { 'metadata.totalExtractions': 1 },
     };
 
     this.logger.log(`Executing query: ${JSON.stringify(query)}`);
@@ -200,7 +207,7 @@ export class FileContractService {
     }
 
     if (updateResult.modifiedCount === 0) {
-      this.logger.error(`Failed to update FileContract for patientId: ${patientId}`);
+      this.logger.warn(`No modifications made for FileContract with patientId: ${patientId}`);
     }
 
     // Fetch the updated document to verify
@@ -214,16 +221,155 @@ export class FileContractService {
     this.logger.log(`Updated document: ${JSON.stringify(updatedDocument, null, 2)}`);
 
     // Verify the new event was added
-    // @ts-ignore
-    const addedEvent = updatedDocument.extraction_results.find(
-      (result: any) => result.event_id === eventId,
+    const addedEvent = updatedDocument.extractionResults.find(
+      (result: any) => result.eventId === eventId,
     );
     if (!addedEvent) {
-      this.logger.error(`Event with eventId: ${eventId} was not added to extraction_results`);
+      this.logger.error(`Event with eventId: ${eventId} was not added to extractionResults`);
+      throw new NotFoundException(
+        `Event with eventId: ${eventId} was not added to extractionResults`,
+      );
     }
+
     return {
       message: `Event with eventId ${eventId} created successfully`,
       status: true,
+    };
+  }
+
+  // Edit event by eventId
+  async updateEvent(eventId: string, input: ExtractionEvent): Promise<UpdateEventResponse> {
+    if (!eventId) {
+      this.logger.error('eventId must be provided');
+      throw new BadRequestException('Event ID must be provided');
+    }
+
+    if (!input || Object.keys(input).length === 0) {
+      this.logger.error('Event data must be provided');
+      throw new BadRequestException('Event data must be provided');
+    }
+
+    // Validate that eventId matches
+    if (input.eventId && input.eventId !== eventId) {
+      this.logger.error(
+        `Event ID mismatch: provided ${eventId}, input data contains ${input.eventId}`,
+      );
+      throw new BadRequestException('Event ID in data must match the provided eventId');
+    }
+
+    // Prepare the update object for extractionResults
+    const updateFields: { [key: string]: any } = {
+      'extractionResults.$.eventType': input.eventType ?? null,
+      'extractionResults.$.category': input.category ?? null,
+      'extractionResults.$.eventDetail': input.eventDetail ?? null,
+      'extractionResults.$.llmExtraction': input.llmExtraction ?? null,
+      'extractionResults.$.reasoning': input.reasoning ?? null,
+      'extractionResults.$.model': input.model ?? null,
+      'extractionResults.$.parserName': input.parserName ?? null,
+      'extractionResults.$.codeLabel': input.codeLabel ?? null,
+      'extractionResults.$.codeValue': input.codeValue ?? null,
+    };
+
+    // Add source fields if provided
+    if (input.source) {
+      let sourceData: { value: string } | Source;
+      if ('value' in input.source && input.source.value) {
+        // SourceString case (ensure value is a string)
+        sourceData = { value: input.source.value };
+      } else if (input.source) {
+        // Source case
+        sourceData = {
+          similarityScore: (input.source as Source).similarityScore ?? null,
+          chunkId: (input.source as Source).chunkId ?? null,
+          chunkNumber: (input.source as Source).chunkNumber ?? null,
+          text: (input.source as Source).text ?? null,
+          textS3Link: (input.source as Source).textS3Link ?? null,
+          pageNumber: (input.source as Source).pageNumber ?? null,
+          documentId: (input.source as Source).documentId ?? null,
+          documentCategory: (input.source as Source).documentCategory ?? null,
+          totalPage: (input.source as Source).totalPage ?? null,
+          filename: (input.source as Source).filename ?? null,
+          testType: (input.source as Source).testType ?? null,
+          productType: (input.source as Source).productType ?? null,
+          coordinates: (input.source as Source).coordinates ?? null,
+        };
+      } else {
+        // Handle null or invalid source
+        sourceData = { value: '' }; // Default to empty SourceString per database schema
+      }
+      updateFields['extractionResults.$.source'] = sourceData;
+    }
+
+    // Perform the update
+    const updateResult = await this.fileContractModel.updateOne(
+      { 'extractionResults.eventId': eventId },
+      { $set: updateFields },
+      { writeConcern: { w: 'majority', j: true } },
+    );
+
+    this.logger.log(
+      `Update result for eventId ${eventId}: ${JSON.stringify(updateResult, null, 2)}`,
+    );
+
+    if (updateResult.matchedCount === 0) {
+      this.logger.error(`No event found with eventId: ${eventId}`);
+      throw new NotFoundException(`Event with eventId ${eventId} not found`);
+    }
+
+    if (updateResult.modifiedCount === 0) {
+      this.logger.warn(`No changes made to event with eventId: ${eventId}`);
+    }
+
+    // Fetch the updated document to retrieve the modified event
+    const updatedDocument = await this.fileContractModel
+      .findOne({ 'extractionResults.eventId': eventId })
+      .lean();
+
+    if (!updatedDocument) {
+      this.logger.error(`Failed to fetch updated document for eventId: ${eventId}`);
+      throw new NotFoundException(`Failed to fetch updated document for eventId: ${eventId}`);
+    }
+
+    // Find the updated event in extractionResults
+    const updatedEventRaw = updatedDocument.extractionResults.find(
+      (result: any) => result.eventId === eventId,
+    );
+
+    if (!updatedEventRaw) {
+      this.logger.error(`Updated event with eventId: ${eventId} not found in extractionResults`);
+      throw new NotFoundException(`Updated event with eventId: ${eventId} not found`);
+    }
+
+    // Convert raw MongoDB document to ExtractionEvent
+    const updatedEvent: ExtractionEvent = {
+      ...updatedEventRaw,
+      source: updatedEventRaw.source
+        ? 'value' in updatedEventRaw.source
+          ? { value: updatedEventRaw.source.value ?? '' }
+          : {
+              similarityScore: updatedEventRaw.source.similarityScore ?? null,
+              chunkId: updatedEventRaw.source.chunkId ?? null,
+              chunkNumber: updatedEventRaw.source.chunkNumber ?? null,
+              text: updatedEventRaw.source.text ?? null,
+              textS3Link: updatedEventRaw.source.textS3Link ?? null,
+              pageNumber: updatedEventRaw.source.pageNumber ?? null,
+              documentId: updatedEventRaw.source.documentId ?? null,
+              documentCategory: updatedEventRaw.source.documentCategory ?? null,
+              totalPage: updatedEventRaw.source.totalPage ?? null,
+              filename: updatedEventRaw.source.filename ?? null,
+              testType: updatedEventRaw.source.testType ?? null,
+              productType: (updatedEventRaw.source.productType as ProductType) ?? null,
+              coordinates: updatedEventRaw.source.coordinates ?? null,
+            }
+        : null,
+    };
+
+    this.logger.log(`Successfully edited eventId ${eventId} in extractionResults`);
+
+    return {
+      message: `Event with eventId ${eventId} updated successfully`,
+      status: true,
+      data: updatedEvent,
     };
   }
 }
