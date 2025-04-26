@@ -95,11 +95,11 @@ export class FileContractService {
       this.logger.error('eventId must be provided');
       throw new NotFoundException('eventId must be provided');
     }
-    const res = await this.fileContractModel.updateOne(
+    await this.fileContractModel.updateOne(
       { 'extractionResults.eventId': eventId },
       { $pull: { extractionResults: { eventId: eventId } } },
     );
-    console.log('response >', res);
+
     this.logger.log(`Successfully deleted eventId ${eventId} from extractionResults`);
 
     return {
