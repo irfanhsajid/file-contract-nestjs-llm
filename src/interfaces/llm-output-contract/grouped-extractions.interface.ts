@@ -101,7 +101,4 @@ type IGroupedExtractionKey =
   | 'Condition'
   | 'Therapeutic Procedure';
 
-export type IGroupedExtractions = Record<
-  IGroupedExtractionKey,
-  IGroupedExtraction[]
->;
+export type IGroupedExtractions = Record<IGroupedExtractionKey, IGroupedExtraction[]>;

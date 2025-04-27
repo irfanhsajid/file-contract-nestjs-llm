@@ -38,8 +38,7 @@ describe('LLM Output Contract', () => {
                   category: 'Biomarker',
                   event_type: 'Biomarker',
                   event_detail: 'Biomarker',
-                  event_id:
-                    '38790137_us.anthropic.claude-3-5-sonnet-20241022-v2:0_14',
+                  event_id: '38790137_us.anthropic.claude-3-5-sonnet-20241022-v2:0_14',
                   llm_extraction: 'Estrogen Receptor',
                   reasoning: 'ER status is mentioned in the clinical documents',
                   parser_name: 'Biomarkers',
@@ -54,8 +53,7 @@ describe('LLM Output Contract', () => {
                   product_type: null,
                   document_category: 'Clinical Report',
                   total_pages: 3,
-                  document_s3_link:
-                    's3://medical-documents/patient_38790137/biomarker_report.pdf',
+                  document_s3_link: 's3://medical-documents/patient_38790137/biomarker_report.pdf',
                   textract_result_s3_link:
                     's3://textract-results/patient_38790137/biomarker_report.json',
                   created_at: '2024-11-09T12:34:56Z',
@@ -80,8 +78,7 @@ describe('LLM Output Contract', () => {
                     status: 'validated',
                     validated_by: 'user123',
                     validated_at: '2024-11-10T09:15:23Z',
-                    validation_notes:
-                      'Standardized terminology from abbreviation to full name',
+                    validation_notes: 'Standardized terminology from abbreviation to full name',
                   },
                   modification_tracking: {
                     original_extraction: {
@@ -110,11 +107,9 @@ describe('LLM Output Contract', () => {
                   category: 'Biomarker',
                   event_type: 'Biomarker',
                   event_detail: 'Biomarker Result Interpretation',
-                  event_id:
-                    '38790137_us.anthropic.claude-3-5-sonnet-20241022-v2:0_14',
+                  event_id: '38790137_us.anthropic.claude-3-5-sonnet-20241022-v2:0_14',
                   llm_extraction: 'Positive',
-                  reasoning:
-                    "Document explicitly states 'ER Status: Positive (+)'",
+                  reasoning: "Document explicitly states 'ER Status: Positive (+)'",
                   parser_name: 'Biomarkers',
                   document_id: 'cf3116d2-ef43-43f2-a2df-6c9342f9430d',
                   external_created_at: '2022-08-23T00:00:00Z',
@@ -127,8 +122,7 @@ describe('LLM Output Contract', () => {
                   product_type: null,
                   document_category: 'Clinical Report',
                   total_pages: 3,
-                  document_s3_link:
-                    's3://medical-documents/patient_38790137/biomarker_report.pdf',
+                  document_s3_link: 's3://medical-documents/patient_38790137/biomarker_report.pdf',
                   textract_result_s3_link:
                     's3://textract-results/patient_38790137/biomarker_report.json',
                   created_at: '2024-11-09T12:34:56Z',
@@ -201,8 +195,7 @@ describe('LLM Output Contract', () => {
                     status: 'human_added',
                     validated_by: 'user123',
                     validated_at: '2024-11-10T09:17:30Z',
-                    validation_notes:
-                      'Information from page 2 of pathology report',
+                    validation_notes: 'Information from page 2 of pathology report',
                   },
                   modification_tracking: {
                     creation: {
@@ -231,8 +224,7 @@ describe('LLM Output Contract', () => {
                   category: 'Biomarker',
                   event_type: 'Biomarker',
                   event_detail: 'Biomarker',
-                  event_id:
-                    '38790137_us.anthropic.claude-3-5-sonnet-20241022-v2:0_15',
+                  event_id: '38790137_us.anthropic.claude-3-5-sonnet-20241022-v2:0_15',
                   llm_extraction: 'PR',
                   reasoning: 'PR status is mentioned in the clinical documents',
                   parser_name: 'Biomarkers',
@@ -247,8 +239,7 @@ describe('LLM Output Contract', () => {
                   product_type: null,
                   document_category: 'Clinical Report',
                   total_pages: 3,
-                  document_s3_link:
-                    's3://medical-documents/patient_38790137/biomarker_report.pdf',
+                  document_s3_link: 's3://medical-documents/patient_38790137/biomarker_report.pdf',
                   textract_result_s3_link:
                     's3://textract-results/patient_38790137/biomarker_report.json',
                   created_at: '2024-11-09T12:34:56Z',
@@ -300,8 +291,7 @@ describe('LLM Output Contract', () => {
               deleted_extractions: [
                 {
                   id: 'del-12348-defgh',
-                  original_extraction_id:
-                    'i56e7890-1234-efgh-ij56-7890123efghi',
+                  original_extraction_id: 'i56e7890-1234-efgh-ij56-7890123efghi',
                   category: 'Biomarker',
                   event_type: 'Biomarker',
                   event_detail: 'HER2 Score',
@@ -324,8 +314,7 @@ describe('LLM Output Contract', () => {
                       user_id: 'user123',
                       user_name: 'Dr. Jane Smith',
                       user_role: 'Oncologist',
-                      reason:
-                        'Duplicate information already captured in HER2 status',
+                      reason: 'Duplicate information already captured in HER2 status',
                       session_id: 'session-67890-fghij',
                     },
                     original_extraction: {
