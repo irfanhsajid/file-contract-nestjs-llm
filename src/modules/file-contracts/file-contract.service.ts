@@ -123,7 +123,7 @@ export class FileContractService {
       codeValue,
       source,
     } = input;
-    // Query the FileContract by patientId in metadata
+
     const query = { 'metadata.patientId': patientId };
 
     // Check if the document exists
@@ -143,7 +143,6 @@ export class FileContractService {
       throw new NotFoundException(`Event with eventId: ${eventId} already exists`);
     }
 
-    // Handle SourceUnion for the source field
     let sourceData: { value: string } | Source;
     if (source && 'value' in source && source.value) {
       // SourceString case (ensure value is a string)
