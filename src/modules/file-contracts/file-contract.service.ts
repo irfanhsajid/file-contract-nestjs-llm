@@ -108,7 +108,6 @@ export class FileContractService {
     };
   }
 
-  // create a event inside extraction_results
   async createEvent(input: ExtractionEvent): Promise<{ message: string; status: boolean }> {
     const {
       patientId,
