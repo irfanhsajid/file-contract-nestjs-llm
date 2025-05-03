@@ -1,3 +1,13 @@
+export declare class InputListFileContracts {
+    casebundlingIds?: Nullable<Nullable<number>[]>;
+    patientIds?: Nullable<Nullable<number>[]>;
+    eventTypes?: Nullable<Nullable<EventTypeScalar>[]>;
+    validationStatuses?: Nullable<Nullable<string>[]>;
+    projectNames?: Nullable<Nullable<string>[]>;
+    cancerTypes?: Nullable<Nullable<string>[]>;
+    page?: Nullable<number>;
+    perPage?: Nullable<number>;
+}
 export declare class SourceInput {
     similarityScore?: Nullable<number>;
     chunkId?: Nullable<string>;
@@ -11,40 +21,38 @@ export declare class SourceInput {
     filename?: Nullable<string>;
     testType?: Nullable<string>;
     productType?: Nullable<string>;
-    coordinates?: Nullable<CoordinatesInput>;
+    coordinates?: Nullable<Nullable<string>[]>;
+    sourceString?: Nullable<string>;
 }
-export declare class CoordinatesInput {
-    page?: Nullable<number>;
-    boundingBox?: Nullable<BoundingBoxInput>;
-}
-export declare class BoundingBoxInput {
-    top?: Nullable<number>;
-    left?: Nullable<number>;
-    width?: Nullable<number>;
-    height?: Nullable<number>;
-}
-export declare class ExtractionResultInput {
-    patientId: number;
-    eventId: string;
-    category: string;
-    eventType: string;
+export declare class CreateExtractionResultInput {
+    category: CategoryScalar;
+    eventType: EventTypeScalar;
     eventDetail: string;
-    llmExtraction: string;
-    reasoning: string;
+    llmExtraction?: Nullable<string>;
+    reasoning?: Nullable<string>;
+    patientId: number;
+    casebundlingId: number;
+    eventId?: Nullable<string>;
+    model?: Nullable<string>;
     parserName?: Nullable<string>;
     codeLabel?: Nullable<string>;
     codeValue?: Nullable<string>;
-    source?: Nullable<SourceInput>;
+    source?: Nullable<Nullable<SourceInput>[]>;
 }
-export declare class BoundingBox {
-    top?: Nullable<number>;
-    left?: Nullable<number>;
-    width?: Nullable<number>;
-    height?: Nullable<number>;
-}
-export declare class Coordinates {
-    page?: Nullable<number>;
-    boundingBox?: Nullable<BoundingBox>;
+export declare class UpdateExtractionResultInput {
+    category?: Nullable<CategoryScalar>;
+    eventType?: Nullable<EventTypeScalar>;
+    eventDetail?: Nullable<string>;
+    llmExtraction?: Nullable<string>;
+    reasoning?: Nullable<string>;
+    patientId?: Nullable<number>;
+    casebundlingId?: Nullable<number>;
+    eventId?: Nullable<string>;
+    model?: Nullable<string>;
+    parserName?: Nullable<string>;
+    codeLabel?: Nullable<string>;
+    codeValue?: Nullable<string>;
+    source?: Nullable<Nullable<SourceInput>[]>;
 }
 export declare class Source {
     similarityScore?: Nullable<number>;
@@ -58,12 +66,14 @@ export declare class Source {
     totalPage?: Nullable<number>;
     filename?: Nullable<string>;
     testType?: Nullable<string>;
-    productType?: Nullable<string>;
-    coordinates?: Nullable<Coordinates>;
+    productType?: Nullable<ProductTypeScalar>;
+    coordinates?: Nullable<Nullable<string>[]>;
+    sourceString?: Nullable<string>;
 }
 export declare class ExtractionResult {
-    category?: Nullable<string>;
-    eventType?: Nullable<string>;
+    _id?: Nullable<string>;
+    category?: Nullable<CategoryScalar>;
+    eventType?: Nullable<EventTypeScalar>;
     eventDetail?: Nullable<string>;
     llmExtraction?: Nullable<string>;
     reasoning?: Nullable<string>;
@@ -73,9 +83,11 @@ export declare class ExtractionResult {
     parserName?: Nullable<string>;
     codeLabel?: Nullable<string>;
     codeValue?: Nullable<string>;
-    source?: Nullable<Source>;
+    source?: Nullable<Nullable<Source>[]>;
 }
 export declare class MetaData {
+    projectName?: Nullable<string>;
+    cancerType?: Nullable<string>;
     patientId?: Nullable<number>;
     caseId?: Nullable<number>;
     casebundlingId?: Nullable<number>;
@@ -83,40 +95,41 @@ export declare class MetaData {
     extractionId?: Nullable<string>;
     genaiPipelineVersion?: Nullable<string>;
     totalExtractions?: Nullable<number>;
-    extractionStatus?: Nullable<string>;
     validationStatus?: Nullable<string>;
+}
+export declare class PaginatedFileContracts {
+    items?: Nullable<Nullable<FileContract>[]>;
+    total?: Nullable<number>;
+    page?: Nullable<number>;
+    perPage?: Nullable<number>;
 }
 export declare class FileContract {
     _id?: Nullable<string>;
     schemaVersion?: Nullable<string>;
     metadata?: Nullable<MetaData>;
     extractionResults?: Nullable<Nullable<ExtractionResult>[]>;
-    createdAt?: Nullable<string>;
-    updatedAt?: Nullable<string>;
-}
-export declare class DeleteEventResponse {
-    message?: Nullable<string>;
-    status?: Nullable<boolean>;
-}
-export declare class CreateEventResponse {
-    message?: Nullable<string>;
-    status?: Nullable<boolean>;
+    createdAt?: Nullable<DateTime>;
 }
 export declare abstract class IQuery {
-    abstract getFileContract(id: string): Nullable<FileContract> | Promise<Nullable<FileContract>>;
-    abstract getExtraction(extractionId: string): Nullable<FileContract> | Promise<Nullable<FileContract>>;
-    abstract getSingleEvent(eventId?: Nullable<string>, filename?: Nullable<string>): Nullable<ExtractionResult> | Promise<Nullable<ExtractionResult>>;
+    abstract getFileContracts(input?: Nullable<InputListFileContracts>): Nullable<PaginatedFileContracts> | Promise<Nullable<PaginatedFileContracts>>;
     abstract patients(): Nullable<Nullable<Patient>[]> | Promise<Nullable<Nullable<Patient>[]>>;
     abstract patient(id: string): Nullable<Patient> | Promise<Nullable<Patient>>;
 }
 export declare abstract class IMutation {
-    abstract deleteEventByEventId(eventId: string): Nullable<DeleteEventResponse> | Promise<Nullable<DeleteEventResponse>>;
-    abstract createEvent(event: ExtractionResultInput): Nullable<CreateEventResponse> | Promise<Nullable<CreateEventResponse>>;
+    abstract processCleanIQResult(file: Upload): FileContract | Promise<FileContract>;
+    abstract createExtractionResult(input: CreateExtractionResultInput): ExtractionResult | Promise<ExtractionResult>;
+    abstract updateExtractionResult(extractionId: string, input: UpdateExtractionResultInput): ExtractionResult | Promise<ExtractionResult>;
+    abstract deleteExtractionResult(extractionId: string): boolean | Promise<boolean>;
 }
 export declare class Patient {
     id?: Nullable<number>;
     name?: Nullable<string>;
     age?: Nullable<number>;
 }
+export type Upload = any;
+export type DateTime = any;
+export type EventTypeScalar = any;
+export type CategoryScalar = any;
+export type ProductTypeScalar = any;
 type Nullable<T> = T | null;
 export {};

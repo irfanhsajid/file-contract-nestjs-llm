@@ -11,9 +11,11 @@ const common_1 = require("@nestjs/common");
 const app_module_1 = require("./modules/app/app.module");
 const config_1 = __importDefault(require("./config"));
 const logging_interceptor_1 = require("./interceptors/logging.interceptor");
+const getCorsConfig_1 = require("./utils/getCorsConfig");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const logger = new common_1.Logger('Main');
+    app.enableCors((0, getCorsConfig_1.getCorsConfig)());
     app.useGlobalInterceptors(new logging_interceptor_1.GraphQLLoggingInterceptor());
     app.use((0, graphqlUploadExpress_mjs_1.default)({
         maxFileSize: config_1.default.graphqlUploadExpress.maxFileSize,

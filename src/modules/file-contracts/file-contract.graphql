@@ -1,12 +1,8 @@
-enum ProductType {
-  EPIC
-  SIGNATERA
-}
-
-enum Status {
-  COMPLETED
-  PENDING
-}
+scalar Upload
+scalar DateTime
+scalar EventTypeScalar
+scalar CategoryScalar
+scalar ProductTypeScalar
 
 type Source {
   similarityScore: Float
@@ -20,19 +16,15 @@ type Source {
   totalPage: Int
   filename: String
   testType: String
-  productType: ProductType
+  productType: ProductTypeScalar
   coordinates: [String]
+  sourceString: String
 }
 
-type SourceString {
-  value: String
-}
-
-union SourceUnion = Source | SourceString
-
-type ExtractionEvent {
-  category: String
-  eventType: String
+type ExtractionResult {
+  _id: String
+  category: CategoryScalar
+  eventType: EventTypeScalar
   eventDetail: String
   llmExtraction: String
   reasoning: String
@@ -42,10 +34,12 @@ type ExtractionEvent {
   parserName: String
   codeLabel: String
   codeValue: String
-  source: SourceUnion
+  source: [Source]
 }
 
 type MetaData {
+  projectName: String
+  cancerType: String
   patientId: Int
   caseId: Int
   casebundlingId: Int
@@ -53,36 +47,35 @@ type MetaData {
   extractionId: String
   genaiPipelineVersion: String
   totalExtractions: Int
-  extractionStatus: Status
-  validationStatus: Status
+  validationStatus: String
+}
+
+type PaginatedFileContracts {
+  items: [FileContract]
+  total: Int
+  page: Int
+  perPage: Int
 }
 
 type FileContract {
   _id: String
   schemaVersion: String
   metadata: MetaData
-  ExtractionEvents: [ExtractionEvent]
-  createdAt: String
-  updatedAt: String
+  extractionResults: [ExtractionResult]
+  createdAt: DateTime
 }
 
-type DeleteEventResponse {
-  message: String
-  status: Boolean
+input InputListFileContracts {
+  casebundlingIds: [Int]
+  patientIds: [Int]
+  eventTypes: [EventTypeScalar]
+  validationStatuses: [String]
+  projectNames: [String]
+  cancerTypes: [String]
+  page: Int
+  perPage: Int
 }
 
-type CreateEventResponse {
-  message: String
-  status: Boolean
-}
-
-type UpdateEventResponse {
-  data: ExtractionEvent
-  message: String
-  status: Boolean
-}
-
-# Input Types
 input SourceInput {
   similarityScore: Float
   chunkId: String
@@ -95,33 +88,50 @@ input SourceInput {
   totalPage: Int
   filename: String
   testType: String
-  productType: ProductType
+  productType: String
   coordinates: [String]
-  value: String # Added to handle string case (e.g., comma-separated UUIDs)
+  sourceString: String
 }
 
-input EventInput {
-  patientId: Int!
-  eventId: String!
-  category: String!
-  eventType: String!
+input CreateExtractionResultInput {
+  category: CategoryScalar!
+  eventType: EventTypeScalar!
   eventDetail: String!
-  llmExtraction: String!
-  reasoning: String!
+  llmExtraction: String
+  reasoning: String
+  patientId: Int!
+  casebundlingId: Int!
+  eventId: String
+  model: String
   parserName: String
   codeLabel: String
   codeValue: String
-  source: SourceInput
+  source: [SourceInput]
+}
+
+input UpdateExtractionResultInput {
+  category: CategoryScalar
+  eventType: EventTypeScalar
+  eventDetail: String
+  llmExtraction: String
+  reasoning: String
+  patientId: Int
+  casebundlingId: Int
+  eventId: String
+  model: String
+  parserName: String
+  codeLabel: String
+  codeValue: String
+  source: [SourceInput]
 }
 
 type Query {
-  getFileContract(id: String!): FileContract
-  getExtraction(extractionId: String!): FileContract
-  getSingleEvent(eventId: String, filename: String): ExtractionEvent
+  getFileContracts(input: InputListFileContracts): PaginatedFileContracts
 }
 
 type Mutation {
-  deleteEventByEventId(eventId: String!): DeleteEventResponse
-  createEvent(input: EventInput!): CreateEventResponse
-  updateEvent(eventId: String!, input: EventInput!): UpdateEventResponse
+  processCleanIQResult(file: Upload!): FileContract!
+  createExtractionResult(input: CreateExtractionResultInput!): ExtractionResult!
+  updateExtractionResult(extractionId: String!, input: UpdateExtractionResultInput!): ExtractionResult!
+  deleteExtractionResult(extractionId: String!): Boolean!
 }

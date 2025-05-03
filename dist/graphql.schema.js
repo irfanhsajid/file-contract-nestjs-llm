@@ -1,24 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Patient = exports.IMutation = exports.IQuery = exports.CreateEventResponse = exports.DeleteEventResponse = exports.FileContract = exports.MetaData = exports.ExtractionResult = exports.Source = exports.Coordinates = exports.BoundingBox = exports.ExtractionResultInput = exports.BoundingBoxInput = exports.CoordinatesInput = exports.SourceInput = void 0;
+exports.Patient = exports.IMutation = exports.IQuery = exports.FileContract = exports.PaginatedFileContracts = exports.MetaData = exports.ExtractionResult = exports.Source = exports.UpdateExtractionResultInput = exports.CreateExtractionResultInput = exports.SourceInput = exports.InputListFileContracts = void 0;
+class InputListFileContracts {
+}
+exports.InputListFileContracts = InputListFileContracts;
 class SourceInput {
 }
 exports.SourceInput = SourceInput;
-class CoordinatesInput {
+class CreateExtractionResultInput {
 }
-exports.CoordinatesInput = CoordinatesInput;
-class BoundingBoxInput {
+exports.CreateExtractionResultInput = CreateExtractionResultInput;
+class UpdateExtractionResultInput {
 }
-exports.BoundingBoxInput = BoundingBoxInput;
-class ExtractionResultInput {
-}
-exports.ExtractionResultInput = ExtractionResultInput;
-class BoundingBox {
-}
-exports.BoundingBox = BoundingBox;
-class Coordinates {
-}
-exports.Coordinates = Coordinates;
+exports.UpdateExtractionResultInput = UpdateExtractionResultInput;
 class Source {
 }
 exports.Source = Source;
@@ -28,15 +22,12 @@ exports.ExtractionResult = ExtractionResult;
 class MetaData {
 }
 exports.MetaData = MetaData;
+class PaginatedFileContracts {
+}
+exports.PaginatedFileContracts = PaginatedFileContracts;
 class FileContract {
 }
 exports.FileContract = FileContract;
-class DeleteEventResponse {
-}
-exports.DeleteEventResponse = DeleteEventResponse;
-class CreateEventResponse {
-}
-exports.CreateEventResponse = CreateEventResponse;
 class IQuery {
 }
 exports.IQuery = IQuery;

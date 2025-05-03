@@ -9,5 +9,11 @@ declare const _default: {
         maxFileSize: number;
         maxFiles: number;
     };
+    okta: {
+        clientId: string;
+        secret: string;
+        issuer: string;
+        scopes: string[];
+    };
 };
 export default _default;

@@ -1,11 +1,14 @@
-import { CreateEventResponse, DeleteEventResponse, ExtractionResult, FileContract } from 'src/graphql.schema';
+import { z } from 'zod';
+import { zUploadFileSchema } from './file-contract.validator';
 import { FileContractService } from './file-contract.service';
+import { ExtractionResult, FileContract } from './file-contract.schema';
+import { CreateExtractionResultInput, InputListFileContracts, PaginatedFileContracts, UpdateExtractionResultInput } from 'src/graphql.schema';
 export declare class FileContractResolver {
     private readonly fileContractService;
     constructor(fileContractService: FileContractService);
-    getFileContract(id: string): Promise<FileContract>;
-    getExtraction(extractionId: string): Promise<FileContract>;
-    getSingleEvent(eventId: string, filename: string): Promise<ExtractionResult>;
-    deleteEventByEventId(eventId: string): Promise<DeleteEventResponse>;
-    createEvent(event: ExtractionResult): Promise<CreateEventResponse>;
+    getFileContracts(input: InputListFileContracts): Promise<PaginatedFileContracts>;
+    processCleanIQResult(data: z.infer<typeof zUploadFileSchema>): Promise<FileContract>;
+    createExtractionResult(input: CreateExtractionResultInput): Promise<ExtractionResult>;
+    updateExtractionResult(extractionId: string, input: UpdateExtractionResultInput): Promise<ExtractionResult>;
+    deleteExtractionResult(extractionId: string): Promise<boolean>;
 }

@@ -1,70 +1,54 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import {
-  CreateEventResponse,
-  DeleteEventResponse,
-  ExtractionEvent,
-  FileContract,
-  UpdateEventResponse,
-} from 'src/graphql.schema';
-import { FileContractService } from './file-contract.service';
+import GraphQLUpload from 'graphql-upload/GraphQLUpload.mjs';
+import { z } from 'zod';
 
-@Resolver()
+import { zUploadFileSchema } from './file-contract.validator';
+import { FileContractService } from './file-contract.service';
+import { ExtractionResult, FileContract } from './file-contract.schema';
+import {
+  CreateExtractionResultInput,
+  InputListFileContracts,
+  PaginatedFileContracts,
+  UpdateExtractionResultInput,
+} from 'src/graphql.schema';
+
+@Resolver('FileContract')
 export class FileContractResolver {
   constructor(private readonly fileContractService: FileContractService) {}
-  @Query(() => FileContract)
-  async getFileContract(
-    @Args({ name: 'id', type: () => String })
-    id: string,
-  ): Promise<FileContract> {
-    const fileContract = await this.fileContractService.getFileContract(id);
-    return fileContract as FileContract;
-  }
-  @Query(() => FileContract)
-  async getExtraction(
-    @Args({ name: 'extractionId', type: () => String })
-    extractionId: string,
-  ): Promise<FileContract> {
-    const fileContract = await this.fileContractService.getExtraction(extractionId);
-    return fileContract as FileContract;
-  }
-  @Query(() => ExtractionEvent)
-  async getSingleEvent(
-    @Args({ name: 'eventId', type: () => String })
-    eventId: string,
-    @Args({ name: 'filename', type: () => String })
-    filename: string,
-  ): Promise<ExtractionEvent> {
-    const ExtractionEvent = await this.fileContractService.getSingleEvent({
-      eventId,
-      filename,
-    });
-    return ExtractionEvent;
-  }
-  @Mutation(() => DeleteEventResponse)
-  async deleteEventByEventId(
-    @Args({ name: 'eventId', type: () => String }) eventId: string,
-  ): Promise<DeleteEventResponse> {
-    const response = await this.fileContractService.deleteEventByEventId(eventId);
-    console.log('Delete response in resolver:', JSON.stringify(response, null, 2));
-    return response;
+
+  @Query(() => PaginatedFileContracts, { name: 'getFileContracts' })
+  async getFileContracts(
+    @Args({ name: 'input', type: () => String })
+    input: InputListFileContracts,
+  ): Promise<PaginatedFileContracts> {
+    return this.fileContractService.getFileContracts(input);
   }
 
-  @Mutation(() => CreateEventResponse)
-  async createEvent(
-    @Args({ name: 'input', type: () => ExtractionEvent }) input: ExtractionEvent,
-  ): Promise<CreateEventResponse> {
-    const response = await this.fileContractService.createEvent(input);
-    console.log('Create response in resolver:', JSON.stringify(response, null, 2));
-    return response;
+  @Mutation(() => FileContract, { name: 'processCleanIQResult' })
+  async processCleanIQResult(
+    @Args({ name: 'file', type: () => GraphQLUpload })
+    data: z.infer<typeof zUploadFileSchema>,
+  ) {
+    return this.fileContractService.processCleanIQResult(data);
   }
 
-  @Mutation(() => UpdateEventResponse)
-  async updateEvent(
-    @Args({ name: 'eventId', type: () => String }) eventId: string,
-    @Args({ name: 'input', type: () => ExtractionEvent }) input: ExtractionEvent,
-  ): Promise<UpdateEventResponse> {
-    const response = await this.fileContractService.updateEvent(eventId, input);
-    console.log('Edit response in resolver:', JSON.stringify(response, null, 2));
-    return response;
+  @Mutation(() => ExtractionResult)
+  async createExtractionResult(
+    @Args('input') input: CreateExtractionResultInput,
+  ): Promise<ExtractionResult> {
+    return this.fileContractService.createExtractionResult(input);
+  }
+
+  @Mutation(() => ExtractionResult)
+  async updateExtractionResult(
+    @Args('extractionId') extractionId: string,
+    @Args('input') input: UpdateExtractionResultInput,
+  ): Promise<ExtractionResult> {
+    return this.fileContractService.updateExtractionResult(extractionId, input);
+  }
+
+  @Mutation(() => Boolean)
+  async deleteExtractionResult(@Args('extractionId') extractionId: string): Promise<boolean> {
+    return this.fileContractService.deleteExtractionResult(extractionId);
   }
 }

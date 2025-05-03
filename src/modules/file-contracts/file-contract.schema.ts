@@ -1,91 +1,218 @@
-import { extendZod, zodSchemaRaw } from '@zodyac/zod-mongoose';
-import { Schema } from 'mongoose';
-import { z } from 'zod';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import mongoose, { Document } from 'mongoose';
 
-extendZod(z);
+// Enums
+export enum EProductType {
+  EPIC = 'epic',
+  SIGNATERA = 'signatera',
+}
 
-// Enum Schemas
-export const ProductTypeSchema = z.enum(['EPIC', 'SIGNATERA']);
-export const StatusSchema = z.enum(['COMPLETED', 'PENDING']);
+export enum EValidationStatus {
+  COMPLETED = 'completed',
+  PENDING = 'pending',
+}
+
+export enum EEventType {
+  DemoGraphicData = 'Demographic Data',
+  CancerDiagnosis = 'Cancer Diagnosis',
+  TumorMetastasis = 'Tumor Metastasis',
+  GroupStage = 'Group Stage',
+  TNMStage = 'TNM Stage',
+  Surgery = 'Surgery',
+  CancerMedication = 'Cancer Medication',
+  Radiation = 'Radiation',
+  OtherProcedure = 'Other Procedure',
+  TumorResponseToTherapy = 'Tumor Response to Therapy',
+  CancerOutcome = 'Cancer Outcome',
+  Death = 'Death',
+  Biomarker = 'Biomarker',
+  ClinicalFollowUp = 'Clinical Follow-Up',
+}
+
+export enum ECategory {
+  Biomarker = 'Biomarker',
+  Condition = 'Condition',
+  Outcome = 'Outcome',
+  TherapeuticProcedure = 'Therapeutic Procedure',
+}
 
 // Source Schema
-export const SourceSchema = z.object({
-  similarityScore: z.number(),
-  chunkId: z.string(),
-  chunkNumber: z.number(),
-  text: z.string(),
-  textS3Link: z.string(),
-  pageNumber: z.number(),
-  documentId: z.number(),
-  documentCategory: z.string(),
-  totalPage: z.number(),
-  filename: z.string(),
-  testType: z.string(),
-  productType: ProductTypeSchema, // Updated to use ProductType enum
-  coordinates: z.array(z.string()),
-});
+@Schema({ _id: false })
+export class Source {
+  @Prop({ required: false })
+  similarityScore?: number;
 
-// SourceString Schema (for string case)
-export const SourceStringSchema = z.object({
-  value: z.string(),
-});
+  @Prop({ required: false })
+  chunkId?: string;
 
-// SourceUnion Schema (supports Source or SourceString)
-export const SourceUnionSchema = z.union([SourceSchema, SourceStringSchema]);
+  @Prop({ required: false })
+  chunkNumber?: number;
+
+  @Prop({ required: false })
+  text?: string;
+
+  @Prop({ required: false })
+  textS3Link?: string;
+
+  @Prop({ required: false })
+  pageNumber?: number;
+
+  @Prop({ required: false })
+  documentId?: number;
+
+  @Prop({ required: false })
+  documentCategory?: string;
+
+  @Prop({ required: false })
+  totalPage?: number;
+
+  @Prop({ required: false })
+  filename?: string;
+
+  @Prop({ required: false })
+  testType?: string;
+
+  @Prop({ enum: EProductType, required: false })
+  productType?: string;
+
+  @Prop({ type: [String], required: false })
+  coordinates?: string[];
+
+  @Prop({ required: false })
+  value?: string;
+}
 
 // ExtractionResult Schema
-export const ExtractionResultSchema = z.object({
-  _id: z.string().optional(),
-  category: z.string(),
-  eventType: z.string(),
-  eventDetail: z.string(),
-  llmExtraction: z.string().optional(),
-  reasoning: z.string().optional(),
-  patientId: z.number(),
-  eventId: z.string().optional(),
-  parserName: z.string().optional(),
-  codeLabel: z.string().optional(),
-  codeValue: z.string().optional(),
-  source: SourceUnionSchema, // Updated to use SourceUnion
-});
+export const ExtractionResultCollectionName = 'extraction_results';
+@Schema({ collection: ExtractionResultCollectionName, timestamps: true })
+export class ExtractionResult {
+  @Prop({ required: true })
+  _id: mongoose.Types.ObjectId;
 
-// MetaData Schema
-export const MetaDataSchema = z
-  .object({
-    patientId: z.number(),
-    caseId: z.number().nullable().optional(),
-    casebundlingId: z.number().nullable().optional(),
-    casebundlingType: z.string().nullable().optional(),
-    extractionId: z.string(),
-    genaiPipelineVersion: z.string(),
-    totalExtractions: z.number(),
-    extractionStatus: StatusSchema, // Updated to use Status enum
-    validationStatus: StatusSchema, // Updated to use Status enum
+  @Prop({ required: true, enum: ECategory })
+  category: string;
+
+  @Prop({ required: true, enum: EEventType })
+  eventType: string;
+
+  @Prop({ required: true })
+  eventDetail: string;
+
+  @Prop({ required: false })
+  llmExtraction?: string;
+
+  @Prop({ required: false })
+  reasoning?: string;
+
+  @Prop({ required: true })
+  patientId: number;
+
+  @Prop({ required: true })
+  casebundlingId: number;
+
+  @Prop({ required: false })
+  eventId?: string;
+
+  @Prop({ required: false })
+  model?: string;
+
+  @Prop({ required: false })
+  parserName?: string;
+
+  @Prop({ required: false })
+  codeLabel?: string;
+
+  @Prop({ required: false })
+  codeValue?: string;
+
+  @Prop({ type: [Source], required: false })
+  source?: Source[];
+
+  @Prop({ required: false })
+  createdAt: Date;
+}
+
+// Metadata Schema
+@Schema({ _id: false })
+export class MetaData {
+  @Prop({ required: true })
+  projectName: string;
+
+  @Prop({ required: true })
+  cancerType: string;
+
+  @Prop({ required: true })
+  patientId: number;
+
+  @Prop({ required: false })
+  caseId?: number;
+
+  @Prop({ required: true })
+  casebundlingId: number;
+
+  @Prop({ required: false })
+  casebundlingType?: string;
+
+  @Prop({ required: true })
+  extractionId: string;
+
+  @Prop({ required: true })
+  genaiPipelineVersion: string;
+
+  @Prop({ required: true })
+  totalExtractions: number;
+
+  @Prop({ enum: EValidationStatus, required: true })
+  validationStatus: string;
+}
+
+// FileContract Schema
+export const FileContractCollectionName = 'file_contracts';
+@Schema({ collection: FileContractCollectionName, timestamps: true })
+export class FileContract {
+  @Prop({ required: true })
+  _id: mongoose.Types.ObjectId;
+
+  @Prop({ required: true })
+  schemaVersion: string;
+
+  @Prop({ type: MetaData, required: true, index: true })
+  metadata: MetaData;
+
+  @Prop({
+    type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'ExtractionResult' }],
+    required: true,
+    index: true,
   })
-  .optional();
+  extractionResults: mongoose.Types.ObjectId[]; // Array of ExtractionResult IDs
 
-// LLM-OutputContract Schema
-export const zFileContractSchema = z.object({
-  // _id is omitted to use MongoDB's default ObjectId type, transformed to string for GraphQL
-  schemaVersion: z.string(),
-  metadata: MetaDataSchema,
-  extractionResults: z.array(ExtractionResultSchema),
-  createdAt: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: 'createdAt must be a valid ISO date string',
-  }),
-  updatedAt: z.string().refine((val) => !isNaN(Date.parse(val)), {
-    message: 'updatedAt must be a valid ISO date string',
-  }),
+  @Prop({ required: false })
+  createdAt: Date;
+}
+
+// Schema Factories
+export const SourceSchema = SchemaFactory.createForClass(Source);
+export const ExtractionResultSchema = SchemaFactory.createForClass(ExtractionResult);
+export const MetaDataSchema = SchemaFactory.createForClass(MetaData);
+export const FileContractSchema = SchemaFactory.createForClass(FileContract);
+
+// Indexing
+ExtractionResultSchema.index({ casebundlingId: 1 });
+ExtractionResultSchema.index({ eventType: 1 });
+ExtractionResultSchema.index({ patientId: 1 });
+ExtractionResultSchema.index({ category: 1 });
+ExtractionResultSchema.index({ casebundlingId: 1, eventType: 1 });
+
+FileContractSchema.index({ 'metadata.casebundlingId': 1 });
+FileContractSchema.index({ 'metadata.patientId': 1 });
+FileContractSchema.index({ 'metadata.cancerType': 1 });
+FileContractSchema.index({ 'metadata.projectName': 1 });
+FileContractSchema.index({ 'metadata.validationStatus': 1 });
+FileContractSchema.index({
+  'metadata.casebundlingId': 1,
+  'metadata.patientId': 1,
 });
 
-export const FileContractSchema: Schema = new Schema(zodSchemaRaw(zFileContractSchema), {
-  collection: 'file_contracts',
-  timestamps: true,
-  toJSON: {
-    virtuals: true,
-  },
-});
-
-export const FileContractToken = 'FileContract';
-
-export type TFileContract = z.infer<typeof zFileContractSchema>;
+// Export the Mongoose model
+export type ExtractionResultDocument = ExtractionResult & Document;
+export type FileContractDocument = FileContract & Document;

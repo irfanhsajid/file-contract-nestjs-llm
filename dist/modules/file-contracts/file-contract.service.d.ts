@@ -1,22 +1,21 @@
+import { z } from 'zod';
 import { Model } from 'mongoose';
-import { ExtractionResult } from 'src/graphql.schema';
-import { TFileContract } from './file-contract.schema';
+import { zUploadFileSchema } from './file-contract.validator';
+import { ExtractionResult, ExtractionResultDocument, FileContract, FileContractDocument } from './file-contract.schema';
+import { CreateExtractionResultInput, InputListFileContracts, PaginatedFileContracts, UpdateExtractionResultInput } from 'src/graphql.schema';
 export declare class FileContractService {
     private readonly fileContractModel;
+    private extractionResultModel;
     private logger;
-    constructor(fileContractModel: Model<TFileContract>);
-    getFileContract(id: string): Promise<TFileContract>;
-    getExtraction(extractionId: string): Promise<TFileContract>;
-    getSingleEvent({ eventId, filename, }: {
-        filename?: string;
-        eventId?: string;
-    }): Promise<ExtractionResult>;
-    deleteEventByEventId(eventId: string): Promise<{
-        message: string;
-        status: boolean;
-    }>;
-    createEvent(event: ExtractionResult): Promise<{
-        message: string;
-        status: boolean;
-    }>;
+    private readonly DEFAULT_PAGE;
+    private readonly DEFAULT_PER_PAGE;
+    constructor(fileContractModel: Model<FileContractDocument>, extractionResultModel: Model<ExtractionResultDocument>);
+    private getFilteredFileContracts;
+    getFileContracts(input: InputListFileContracts): Promise<PaginatedFileContracts>;
+    private parseJsonFile;
+    private createExtractionResultSources;
+    processCleanIQResult({ file }: z.infer<typeof zUploadFileSchema>): Promise<FileContract>;
+    createExtractionResult(input: CreateExtractionResultInput): Promise<ExtractionResult>;
+    updateExtractionResult(extractionId: string, input: UpdateExtractionResultInput): Promise<ExtractionResult>;
+    deleteExtractionResult(extractionId: string): Promise<boolean>;
 }

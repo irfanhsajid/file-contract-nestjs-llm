@@ -1,15 +1,16 @@
-import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
-import { MongooseModule } from '@nestjs/mongoose';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
+import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+import { MongooseModule } from '@nestjs/mongoose';
 
 import { mongooseFactory } from 'src/utils/mongooseFactory';
 import { PatientsResolver } from '../../patients/patients.resolver';
 import { PatientsService } from '../../patients/patients.service';
 import { FileContractModule } from '../file-contracts/file-contract.module';
 import { HealthController } from './health.controller';
+import { ClinvaultModule } from '../clinvault/clinvault.module';
 
 @Module({
   imports: [
@@ -24,11 +25,11 @@ import { HealthController } from './health.controller';
       introspection: true,
       plugins: [ApolloServerPluginLandingPageLocalDefault()],
     }),
-    // MongooseModule.forRootAsync({
-    //   useFactory: mongooseFactory,
-    // }),
-    MongooseModule.forRoot('mongodb://localhost:27017/natera-clinverify'),
+    MongooseModule.forRootAsync({
+      useFactory: mongooseFactory,
+    }),
     FileContractModule,
+    ClinvaultModule,
   ],
   controllers: [HealthController],
   providers: [PatientsResolver, PatientsService],
